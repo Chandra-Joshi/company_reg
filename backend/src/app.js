@@ -4,6 +4,7 @@ import config from './config/config.js';
 import { initDB } from './data/database.js';
 import companyRoutes from './routes/companyRoutes.js';
 import shareholderRoutes from './routes/shareholderRoutes.js';
+import logger from './middlewares/logger.js';
 const app = express();
 
 // Middleware
@@ -22,6 +23,7 @@ app.use(
     })
 );
 app.use(express.json());
+app.use(logger);
 
 // Routes
 app.use('/api/companies', companyRoutes);
