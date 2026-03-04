@@ -62,4 +62,37 @@ const getCompanyById = async (id) => {
   return result.rows[0] || null;
 };
 
-export { createCompany, getAllCompanies, getCompanyById };
+// Atomically create a company and its shareholders in one transaction
+const createCompanyWithShareholders = async (company, shareholders) => {
+  const { name, num_shareholders, total_capital } = company;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const companyResult = await client.query(
+      `INSERT INTO companies (name, num_shareholders, total_capital)
+       VALUES ($1, $2, $3)
+       RETURNING *`,
+      [name, num_shareholders, total_capital]
+    );
+    const newCompany = companyResult.rows[0];
+
+    for (const s of shareholders) {
+      await client.query(
+        `INSERT INTO shareholders (company_id, first_name, last_name, nationality)
+         VALUES ($1, $2, $3, $4)`,
+        [newCompany.id, s.first_name.trim(), s.last_name.trim(), s.nationality.trim()]
+      );
+    }
+
+    await client.query('COMMIT');
+    return { ...newCompany, shareholders };
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+};
+
+export { createCompany, getAllCompanies, getCompanyById, createCompanyWithShareholders };

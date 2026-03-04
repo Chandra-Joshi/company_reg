@@ -7,7 +7,20 @@ import shareholderRoutes from './routes/shareholderRoutes.js';
 const app = express();
 
 // Middleware
-app.use(cors({ origin: 'http://localhost:5173' }));
+const allowAllOrigins = config.clientOrigins.includes('*');
+const allowedOriginSet = new Set(config.clientOrigins);
+
+app.use(
+    cors({
+        origin(origin, callback) {
+            if (allowAllOrigins || !origin || allowedOriginSet.has(origin)) {
+                return callback(null, true);
+            }
+            console.warn(`Blocked CORS origin: ${origin}`);
+            return callback(new Error('Not allowed by CORS'));
+        },
+    })
+);
 app.use(express.json());
 
 // Routes

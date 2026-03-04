@@ -1,20 +1,18 @@
 import axios from 'axios';
 
+const baseURL = (import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL.trim()) || 'http://localhost:5000/api';
+
 const API = axios.create({
-    baseURL: 'http://localhost:5000/api',
+    baseURL,
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
-// Create a new company (Step 1)
-export const createCompany = (data) => API.post('/companies', data);
+// Submit company + shareholders atomically in one call (new single-submit flow)
+export const submitIncorporation = (data) => API.post('/companies/submit', data);
 
-// Add shareholders to a company (Step 2)
-export const addShareholders = (companyId, shareholders) =>
-    API.post(`/companies/${companyId}/shareholders`, { shareholders });
-
-// Get all companies
+// Get all companies (used by Admin page)
 export const getCompanies = () => API.get('/companies');
 
 // Get a single company by ID

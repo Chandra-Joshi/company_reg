@@ -1,115 +1,62 @@
-# Company Incorporation Tool
+# Company Registration Tool
 
-A full-stack web application for managing company incorporations with a multi-step form, shareholder management, and admin dashboard.
+A simple full-stack web application for registering companies and their shareholders.
 
 ## Tech Stack
+- **Frontend:** React (Vite), Tailwind CSS, React Router
+- **Backend:** Node.js, Express.js
+- **Database:** PostgreSQL
 
-| Layer    | Technology                                       |
-| -------- | ------------------------------------------------ |
-| Backend  | Node.js, Express.js, PostgreSQL (`pg` library)   |
-| Frontend | Vite, React 18, Tailwind CSS, React Router DOM, Axios |
-| Database | PostgreSQL                                        |
+## How to Run the Project
 
-## Features
-
-- **Multi-step incorporation form** with real-time validation
-- **Draft persistence** — refresh the browser or return later, your progress is saved
-- **Automatic database initialization** — tables created on server start
-- **Admin dashboard** with company list and detail modal
-- **JSON aggregation** — companies returned with nested shareholders via `json_agg`
-- **Responsive design** — works on desktop and mobile
-- **Modern UI** — gradient accents, animations, progress bar, loading spinners
-
-## Setup Instructions
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) v18+
-- [PostgreSQL](https://www.postgresql.org/) installed and running
-
-### 1. Create the Database
-
+### 1. Database Setup
+Create a PostgreSQL database named `company_incorporation`:
 ```sql
 CREATE DATABASE company_incorporation;
 ```
 
 ### 2. Backend Setup
+The backend runs on port `5000`.
 
-```bash
-cd backend
-npm install
-cp .env.example .env
-```
-
-Edit `.env` to set your PostgreSQL connection string:
-
-```
-DATABASE_URL=postgresql://postgres:yourpassword@localhost:5432/company_incorporation
-PORT=5000
-```
-
-Start the backend:
-
-```bash
-npm run dev
-```
-
-The server will automatically create the `companies` and `shareholders` tables on startup.
+1. Open a terminal and navigate to the `backend` folder:
+   ```bash
+   cd backend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Create a `.env` file based on `.env.example` and update your database credentials:
+   ```env
+   DATABASE_URL=postgresql://postgres:yourpassword@localhost:5432/company_incorporation
+   PORT=5000
+   ```
+4. Start the server (it will automatically create the required database tables):
+   ```bash
+   npm run dev
+   ```
 
 ### 3. Frontend Setup
+The frontend runs on port `5173`.
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+1. Open a new terminal and navigate to the `frontend` folder:
+   ```bash
+   cd frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the Vite dev server:
+   ```bash
+   npm run dev
+   ```
 
 ### 4. Open the App
+Go to `http://localhost:5173` in your browser.
 
-Navigate to [http://localhost:5173](http://localhost:5173) in your browser.
-
-## Running Both Servers
-
-Open two terminal windows:
-
-**Terminal 1 — Backend:**
-```bash
-cd backend && npm run dev
-```
-
-**Terminal 2 — Frontend:**
-```bash
-cd frontend && npm run dev
-```
-
-## API Endpoints
-
-| Method | Endpoint                          | Description                          |
-| ------ | --------------------------------- | ------------------------------------ |
-| POST   | `/api/companies`                  | Create a new company (Step 1 draft)  |
-| POST   | `/api/companies/:id/shareholders` | Add shareholders to a company        |
-| GET    | `/api/companies`                  | Get all companies with shareholders  |
-| GET    | `/api/companies/:id`              | Get a single company with shareholders |
-
-## Reset Database
-
-```sql
-DROP TABLE IF EXISTS shareholders;
-DROP TABLE IF EXISTS companies;
-```
-
-Then restart the backend — tables will be re-created automatically.
-
-## Screenshots
-
-> _Screenshots can be added here after running the application._
-
-## Bonus Features
-
-- ✅ Clean architecture with separation of concerns
-- ✅ Auto table creation on startup (`CREATE TABLE IF NOT EXISTS`)
-- ✅ JSON aggregation with `json_agg` + `json_build_object`
-- ✅ Draft persistence via `localStorage` + backend storage
-- ✅ Beautiful, responsive Tailwind CSS UI with animations
-- ✅ Proper error handling and validation on both frontend & backend
-- ✅ Transaction-based shareholder insertion with rollback support
+## Features
+- **Company Registration:** A simple 2-step form to register a company and its shareholders.
+- **Admin Panel:** View all registered companies and their details.
+- **Atomic Operations:** Company and shareholders are saved together securely in a single database transaction.
+- **Clean UI:** Responsive, minimal, and beginner-friendly design using Tailwind CSS.

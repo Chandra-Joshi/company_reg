@@ -43,4 +43,35 @@ const getCompanyById = async (req, res) => {
     }
 };
 
-export { createCompany, getAllCompanies, getCompanyById };
+// POST /api/companies/submit — create company + shareholders in one atomic call
+const createCompanyWithShareholders = async (req, res) => {
+    try {
+        const { company, shareholders } = req.body;
+
+        if (!company || !company.name || !company.num_shareholders || !company.total_capital) {
+            return res.status(400).json({ error: 'Company name, number of shareholders, and total capital are required.' });
+        }
+        if (!Array.isArray(shareholders) || shareholders.length === 0) {
+            return res.status(400).json({ error: 'At least one shareholder is required.' });
+        }
+        if (shareholders.length !== parseInt(company.num_shareholders)) {
+            return res.status(400).json({ error: `Expected ${company.num_shareholders} shareholders, got ${shareholders.length}.` });
+        }
+
+        const result = await companyService.createCompanyWithShareholders(
+            {
+                name: company.name.trim(),
+                num_shareholders: parseInt(company.num_shareholders),
+                total_capital: parseFloat(company.total_capital),
+            },
+            shareholders
+        );
+
+        res.status(201).json(result);
+    } catch (err) {
+        console.error('Error creating company with shareholders:', err.message);
+        res.status(500).json({ error: 'Failed to submit incorporation. Please try again.' });
+    }
+};
+
+export { createCompany, getAllCompanies, getCompanyById, createCompanyWithShareholders };
