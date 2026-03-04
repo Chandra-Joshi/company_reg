@@ -4,6 +4,8 @@ dotenv.config();
 const defaultOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5174',
   'http://localhost:4173',
   'http://127.0.0.1:4173',
   'null',
@@ -16,15 +18,15 @@ const parseOrigins = (origins) =>
     .filter(Boolean);
 
 const resolveClientOrigins = () => {
-  const { ALLOWED_ORIGINS } = process.env;
-  if (!ALLOWED_ORIGINS || !ALLOWED_ORIGINS.trim()) {
-    return defaultOrigins;
-  }
+  const { ALLOWED_ORIGINS, NODE_ENV } = process.env;
+  // In development, allow all origins so any Vite port works
+  if (NODE_ENV !== 'production') return ['*'];
+  if (!ALLOWED_ORIGINS || !ALLOWED_ORIGINS.trim()) return defaultOrigins;
   return parseOrigins(ALLOWED_ORIGINS);
 };
 
 const config = {
-  port: Number(process.env.PORT) || 5000,
+  port: Number(process.env.PORT) || 5001,
   clientOrigins: resolveClientOrigins(),
 };
 
