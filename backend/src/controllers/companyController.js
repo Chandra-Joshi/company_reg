@@ -1,4 +1,5 @@
 import * as companyService from '../services/companyService.js';
+import { pool } from '../data/database.js';
 
 // POST request to create a new company
 const createCompany = async (req, res) => {
@@ -58,6 +59,15 @@ const createCompanyWithShareholders = async (req, res) => {
             return res.status(400).json({ error: `Expected ${company.num_shareholders} shareholders, got ${shareholders.length}.` });
         }
 
+        // Check for duplicate company name before starting transaction
+        const existing = await pool.query(
+            'SELECT id FROM companies WHERE LOWER(name) = LOWER($1) LIMIT 1',
+            [company.name.trim()]
+        );
+        if (existing.rows.length > 0) {
+            return res.status(400).json({ error: 'A company with this name already exists.' });
+        }
+
         const result = await companyService.createCompanyWithShareholders(
             {
                 name: company.name.trim(),
@@ -69,6 +79,9 @@ const createCompanyWithShareholders = async (req, res) => {
 
         res.status(201).json(result);
     } catch (err) {
+        if (err.code === '23505' && err.constraint && err.constraint.includes('name')) {
+            return res.status(400).json({ error: 'A company with this name already exists.' });
+        }
         console.error('Error creating company with shareholders:', err.message);
         res.status(500).json({ error: 'Failed to submit incorporation. Please try again.' });
     }

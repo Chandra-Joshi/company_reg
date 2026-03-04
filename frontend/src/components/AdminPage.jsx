@@ -137,20 +137,18 @@ const AdminPage = () => {
                         ) : (
                             <>
                                 {/* Modal Header */}
-                                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+                                <div className="px-5 py-4 border-b border-gray-200">
                                     <h2 className="text-base font-semibold text-gray-800">{selectedCompany.name}</h2>
-                                    <button
-                                        onClick={closeModal}
-                                        className="text-gray-400 hover:text-gray-600 text-sm font-medium"
-                                    >
-                                        Close
-                                    </button>
                                 </div>
 
                                 {/* Modal Body */}
                                 <div className="px-5 py-4">
                                     {/* Company info */}
                                     <div className="grid grid-cols-2 gap-3 mb-5">
+                                        <div className="col-span-2 bg-gray-50 border border-gray-200 rounded-md p-3">
+                                            <p className="text-xs text-gray-500 mb-1">Company ID</p>
+                                            <p className="text-sm font-semibold text-gray-800">#{selectedCompany.id}</p>
+                                        </div>
                                         <div className="bg-gray-50 border border-gray-200 rounded-md p-3">
                                             <p className="text-xs text-gray-500 mb-1">Total Capital</p>
                                             <p className="text-sm font-semibold text-gray-800">
