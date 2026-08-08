@@ -8,6 +8,10 @@ node_modules/
 dist/
 build/
 
+# Uploaded client documents (local disk storage)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
 # IDE
 .vscode/
 .idea/
@@ -21,3 +25,4 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+*.tsbuildinfo

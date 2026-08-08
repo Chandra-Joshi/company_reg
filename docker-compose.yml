@@ -1,25 +1,30 @@
 services:
   backend:
     build: ./backend
-    container_name: company_reg_container
+    container_name: ca_firm_backend
     ports:
       - "5000:5000"
     depends_on:
       - db
     environment:
-      DATABASE_URL: postgresql://postgres:12345@db:5432/company_incorporation
+      DATABASE_URL: postgresql://postgres:12345@db:5432/ca_firm_management
       PORT: 5000
       NODE_ENV: production
+      ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+      JWT_SECRET: change-this-to-a-long-random-string
+      JWT_EXPIRES_IN: 1d
+      ADMIN_EMAIL: admin@cafirm.com
+      ADMIN_PASSWORD: Admin@12345
     restart: always
 
   db:
     image: postgres:15
-    container_name: company_db_container
+    container_name: ca_firm_db
     restart: always
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 12345
-      POSTGRES_DB: company_incorporation
+      POSTGRES_DB: ca_firm_management
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:

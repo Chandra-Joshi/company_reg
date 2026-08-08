@@ -1,0 +1,373 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// PBAC core: Users hold zero or more Roles, and Roles hold zero or more
+// Permissions. Users may also be granted or explicitly denied individual
+// Permissions directly (UserPermission), which lets access be tuned per
+// person instead of only through fixed roles. A direct DENY always wins
+// over a role-granted ALLOW - see permission.service.ts.
+// ---------------------------------------------------------------------------
+
+enum PermissionEffect {
+  ALLOW
+  DENY
+}
+
+model User {
+  id       String  @id @default(uuid())
+  name     String
+  email    String  @unique
+  password String
+  isActive Boolean @default(true)
+
+  employee    Employee?
+  roles       UserRole[]
+  permissions UserPermission[]
+
+  assignedClients Client[] @relation("ClientAssignee")
+  createdClients  Client[] @relation("ClientCreatedBy")
+
+  uploadedDocuments ClientDocument[]
+  communications    ClientCommunication[]
+
+  assignedTasks Task[] @relation("TaskAssignee")
+  createdTasks  Task[] @relation("TaskCreatedBy")
+
+  filedTaxFilings    TaxFiling[] @relation("TaxFiledBy")
+  approvedTaxFilings TaxFiling[] @relation("TaxApprovedBy")
+
+  reviewedPerformanceNotes PerformanceNote[] @relation("PerformanceReviewer")
+
+  auditLogs AuditLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Role {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  description String?
+  isSystem    Boolean @default(false)
+
+  permissions RolePermission[]
+  users       UserRole[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String  @id @default(uuid())
+  key         String  @unique
+  module      String
+  action      String
+  description String?
+
+  roles RolePermission[]
+  users UserPermission[]
+
+  createdAt DateTime @default(now())
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String @id @default(uuid())
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model UserRole {
+  id     String @id @default(uuid())
+  userId String
+  roleId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, roleId])
+  @@map("user_roles")
+}
+
+model UserPermission {
+  id           String           @id @default(uuid())
+  userId       String
+  permissionId String
+  effect       PermissionEffect @default(ALLOW)
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, permissionId])
+  @@map("user_permissions")
+}
+
+// ---------------------------------------------------------------------------
+// Employee Management
+// ---------------------------------------------------------------------------
+
+model Department {
+  id        String     @id @default(uuid())
+  name      String     @unique
+  employees Employee[]
+
+  createdAt DateTime @default(now())
+
+  @@map("departments")
+}
+
+model Designation {
+  id        String     @id @default(uuid())
+  title     String     @unique
+  employees Employee[]
+
+  createdAt DateTime @default(now())
+
+  @@map("designations")
+}
+
+model Employee {
+  id            String  @id @default(uuid())
+  userId        String  @unique
+  employeeCode  String  @unique
+  phone         String?
+  departmentId  String?
+  designationId String?
+  joiningDate   DateTime?
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department  Department?  @relation(fields: [departmentId], references: [id])
+  designation Designation? @relation(fields: [designationId], references: [id])
+
+  performanceNotes PerformanceNote[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("employees")
+}
+
+model PerformanceNote {
+  id         String  @id @default(uuid())
+  employeeId String
+  rating     Int
+  remarks    String?
+  reviewedById String
+
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  reviewedBy User     @relation("PerformanceReviewer", fields: [reviewedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@map("performance_notes")
+}
+
+// ---------------------------------------------------------------------------
+// Client Management
+// ---------------------------------------------------------------------------
+
+enum ClientStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum KycStatus {
+  PENDING
+  SUBMITTED
+  VERIFIED
+  REJECTED
+}
+
+model Client {
+  id           String       @id @default(uuid())
+  name         String
+  email        String?
+  phone        String?
+  pan          String?      @unique
+  gstin        String?      @unique
+  address      String?
+  status       ClientStatus @default(ACTIVE)
+  kycStatus    KycStatus    @default(PENDING)
+  assignedToId String?
+  createdById  String
+
+  assignedTo User? @relation("ClientAssignee", fields: [assignedToId], references: [id])
+  createdBy  User  @relation("ClientCreatedBy", fields: [createdById], references: [id])
+
+  documents      ClientDocument[]
+  communications ClientCommunication[]
+  tasks          Task[]
+  taxFilings     TaxFiling[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("clients")
+}
+
+model ClientDocument {
+  id           String @id @default(uuid())
+  clientId     String
+  docType      String
+  fileName     String
+  filePath     String
+  uploadedById String
+
+  client     Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  uploadedBy User   @relation(fields: [uploadedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@map("client_documents")
+}
+
+enum CommunicationType {
+  CALL
+  EMAIL
+  MEETING
+  NOTE
+}
+
+model ClientCommunication {
+  id               String            @id @default(uuid())
+  clientId         String
+  type             CommunicationType
+  subject          String
+  notes            String?
+  communicatedById String
+
+  client         Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  communicatedBy User   @relation(fields: [communicatedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@map("client_communications")
+}
+
+// ---------------------------------------------------------------------------
+// Task Management
+// ---------------------------------------------------------------------------
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model Task {
+  id           String       @id @default(uuid())
+  title        String
+  description  String?
+  clientId     String?
+  assignedToId String?
+  createdById  String
+  status       TaskStatus   @default(PENDING)
+  priority     TaskPriority @default(MEDIUM)
+  dueDate      DateTime?
+  completedAt  DateTime?
+
+  client     Client? @relation(fields: [clientId], references: [id])
+  assignedTo User?   @relation("TaskAssignee", fields: [assignedToId], references: [id])
+  createdBy  User    @relation("TaskCreatedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("tasks")
+}
+
+// ---------------------------------------------------------------------------
+// Tax Filing Module
+// ---------------------------------------------------------------------------
+
+enum TaxType {
+  ITR
+  GST
+  TDS
+  ADVANCE_TAX
+  TAX_NOTICE
+}
+
+enum TaxStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+model TaxFiling {
+  id           String    @id @default(uuid())
+  type         TaxType
+  clientId     String
+  period       String
+  status       TaxStatus @default(DRAFT)
+  amount       Decimal?  @db.Decimal(14, 2)
+  dueDate      DateTime?
+  remarks      String?
+  filedById    String?
+  submittedAt  DateTime?
+  approvedById String?
+  approvedAt   DateTime?
+
+  client     Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  filedBy    User?  @relation("TaxFiledBy", fields: [filedById], references: [id])
+  approvedBy User?  @relation("TaxApprovedBy", fields: [approvedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("tax_filings")
+}
+
+// ---------------------------------------------------------------------------
+// Audit Log (Role & Permission Management module)
+// ---------------------------------------------------------------------------
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  action     String
+  entityType String
+  entityId   String?
+  metadata   Json?
+  ipAddress  String?
+
+  user User? @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@map("audit_logs")
+}
